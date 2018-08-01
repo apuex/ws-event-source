@@ -5,12 +5,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.ImportResource;
 import org.springframework.http.converter.protobuf.ProtobufHttpMessageConverter;
-
-import javax.xml.soap.SOAPConnectionFactory;
 
 @Configuration
 @ComponentScan({"com.github.apuex.ws.*"})
+@ImportResource("classpath:app-config.xml")
 @SpringBootApplication
 public class Application {
 
