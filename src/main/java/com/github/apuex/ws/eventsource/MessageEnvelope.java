@@ -1,12 +1,14 @@
 package com.github.apuex.ws.eventsource;
 
+import com.google.protobuf.MessageOrBuilder;
+
 import java.util.Objects;
 
-public class MessageEnvlope {
+public class MessageEnvelope {
   private final String msgType;
-  private final Object msg;
+  private final MessageOrBuilder msg;
 
-  public MessageEnvlope(String msgType, Object msg) {
+  public MessageEnvelope(String msgType, MessageOrBuilder msg) {
     this.msgType = msgType;
     this.msg = msg;
   }
@@ -15,7 +17,7 @@ public class MessageEnvlope {
     return msgType;
   }
 
-  public Object getMsg() {
+  public MessageOrBuilder getMsg() {
     return msg;
   }
 
@@ -23,7 +25,7 @@ public class MessageEnvlope {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    MessageEnvlope that = (MessageEnvlope) o;
+    MessageEnvelope that = (MessageEnvelope) o;
     return Objects.equals(msgType, that.msgType) &&
         Objects.equals(msg, that.msg);
   }
@@ -36,7 +38,7 @@ public class MessageEnvlope {
 
   @Override
   public String toString() {
-    return "MessageEnvlope{" +
+    return "MessageEnvelope{" +
         "msgType='" + msgType + '\'' +
         ", msg=" + msg +
         '}';

@@ -1,31 +1,38 @@
 package com.github.apuex.ws.eventsource;
 
-import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jms.core.JmsTemplate;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.socket.*;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.Executor;
 
 public class MessageHandler implements WebSocketHandler, MessageListener {
   private Logger log = LoggerFactory.getLogger(this.getClass().getName());
   private final JmsTemplate jmsTemplate;
-  private final ThreadPoolTaskScheduler taskScheduler;
-  private final Map<String, WebSocketSession> sessionMap = new HashMap<>();
-  private final Set<String> invalidSessionIds = new HashSet<>();
-  private final Gson gson = new Gson();
+  private final Executor executor;
+  private final Map<String, WsConnection> sessionMap = new HashMap<>();
+  private final WsConnectionEventHandler handler = new WsConnectionEventHandler() {
 
-  public MessageHandler(JmsTemplate jmsTemplate, ThreadPoolTaskScheduler taskScheduler) {
+    @Override
+    public void handleConnectionBroken(WebSocketSession session) {
+      sessionMap.remove(session.getId());
+    }
+
+    @Override
+    public void handleConnectionError(WebSocketSession session, Throwable t) {
+      sessionMap.remove(session.getId());
+    }
+  };
+
+  public MessageHandler(JmsTemplate jmsTemplate, Executor executor) {
     this.jmsTemplate = jmsTemplate;
-    this.taskScheduler = taskScheduler;
+    this.executor = executor;
   }
 
   @Override
@@ -35,16 +42,7 @@ public class MessageHandler implements WebSocketHandler, MessageListener {
         javax.jms.TextMessage tm = (javax.jms.TextMessage) message;
         TextMessage msg = new TextMessage(tm.getText());
 
-        sessionMap.entrySet().forEach(e -> {
-          try {
-            e.getValue().sendMessage(msg);
-          } catch (Throwable t) {
-            log.warn("{}", t);
-            invalidSessionIds.add(e.getKey());
-          }
-        });
-        invalidSessionIds.forEach(id -> sessionMap.remove(id));
-        invalidSessionIds.clear();
+        sessionMap.entrySet().forEach(e -> e.getValue().enque(msg));
       }
     } catch (JMSException e) {
       throw new RuntimeException(e);
@@ -54,7 +52,7 @@ public class MessageHandler implements WebSocketHandler, MessageListener {
   @Override
   public void afterConnectionEstablished(WebSocketSession session) throws Exception {
     log.info("{}, {} connected.\n", session.getId(), session.getUri());
-    sessionMap.put(session.getId(), session);
+    sessionMap.put(session.getId(), new WsConnection(session, handler, executor));
   }
 
   @Override
@@ -70,14 +68,14 @@ public class MessageHandler implements WebSocketHandler, MessageListener {
   @Override
   public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
     log.info("{}, {} disconnected.\n", session.getId(), session.getUri());
-    invalidSessionIds.add(session.getId());
     exception.printStackTrace();
+    sessionMap.remove(session.getId());
   }
 
   @Override
   public void afterConnectionClosed(WebSocketSession session, CloseStatus closeStatus) throws Exception {
     log.info("{}, {} disconnected.\n", session.getId(), session.getUri());
-    invalidSessionIds.add(session.getId());
+    sessionMap.remove(session.getId());
   }
 
   @Override
