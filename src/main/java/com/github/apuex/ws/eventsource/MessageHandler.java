@@ -1,5 +1,10 @@
 package com.github.apuex.ws.eventsource;
 
+import com.github.apuex.springbootsolution.runtime.Messages;
+import com.google.protobuf.Any;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.StringValue;
+import com.google.protobuf.util.JsonFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jms.core.JmsTemplate;
@@ -38,13 +43,25 @@ public class MessageHandler implements WebSocketHandler, MessageListener {
   @Override
   public void onMessage(Message message) {
     try {
-      if (message instanceof javax.jms.TextMessage) {
-        javax.jms.TextMessage tm = (javax.jms.TextMessage) message;
-        TextMessage msg = new TextMessage(tm.getText());
+      if (message instanceof javax.jms.BytesMessage) {
+        javax.jms.BytesMessage tm = (javax.jms.BytesMessage) message;
+        String type = tm.getStringProperty("type");
+        byte[] bytes = new byte[(int) tm.getBodyLength()];
+        Any any = Any.parseFrom(bytes);
+        TextMessage msg = new TextMessage(JsonFormat.printer().print(any));
 
         sessionMap.entrySet().forEach(e -> e.getValue().enque(msg));
+      } else {
+        Any any = Any.pack(Messages.QueryCommand.newBuilder().build());
+        JsonFormat.TypeRegistry registry = JsonFormat.TypeRegistry.newBuilder()
+            .add(StringValue.getDescriptor())
+            .add(com.github.apuex.springbootsolution.runtime.Messages.getDescriptor().getMessageTypes())
+            .build();
+        log.warn(JsonFormat.printer().usingTypeRegistry(registry).print(any));
       }
     } catch (JMSException e) {
+      throw new RuntimeException(e);
+    } catch (InvalidProtocolBufferException e) {
       throw new RuntimeException(e);
     }
   }

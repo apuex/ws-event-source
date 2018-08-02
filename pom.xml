@@ -16,6 +16,11 @@
 
   <dependencies>
     <dependency>
+      <groupId>com.github.apuex.springbootsolution</groupId>
+      <artifactId>runtime_2.12</artifactId>
+      <version>1.0.1</version>
+    </dependency>
+    <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
       <version>${protobuf.version}</version>
