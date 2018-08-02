@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jms.core.JmsTemplate;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.socket.*;
 
 import javax.jms.JMSException;
@@ -14,17 +15,17 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static java.lang.System.out;
-
 public class MessageHandler implements WebSocketHandler, MessageListener {
   private Logger log = LoggerFactory.getLogger(this.getClass().getName());
   private final JmsTemplate jmsTemplate;
+  private final ThreadPoolTaskScheduler taskScheduler;
   private final Map<String, WebSocketSession> sessionMap = new HashMap<>();
   private final Set<String> invalidSessionIds = new HashSet<>();
   private final Gson gson = new Gson();
 
-  public MessageHandler(JmsTemplate jmsTemplate) {
+  public MessageHandler(JmsTemplate jmsTemplate, ThreadPoolTaskScheduler taskScheduler) {
     this.jmsTemplate = jmsTemplate;
+    this.taskScheduler = taskScheduler;
   }
 
   @Override
@@ -38,6 +39,7 @@ public class MessageHandler implements WebSocketHandler, MessageListener {
           try {
             e.getValue().sendMessage(msg);
           } catch (Throwable t) {
+            log.warn("{}", t);
             invalidSessionIds.add(e.getKey());
           }
         });

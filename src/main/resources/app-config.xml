@@ -53,10 +53,16 @@
     <constructor-arg ref="eventNotifyTemplate"/>
   </bean>
 
+  <bean id="taskScheduler" class="org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler">
+    <property name="poolSize" value="8"/>
+    <property name="threadNamePrefix" value="event-store"/>
+  </bean>
+
   <bean id="jmsMessageListenerContainer" class="org.springframework.jms.listener.DefaultMessageListenerContainer">
     <property name="connectionFactory" ref="jmsConnectionFactory"/>
     <property name="destination" ref="eventNotifyTopic"/>
     <property name="messageListener" ref="messageHandler"/>
+    <property name="taskExecutor" ref="taskScheduler"/>
   </bean>
 
   <websocket:handlers>
