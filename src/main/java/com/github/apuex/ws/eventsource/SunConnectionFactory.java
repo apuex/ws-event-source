@@ -12,11 +12,7 @@ public class SunConnectionFactory extends ConnectionFactory {
 
   public void setConfiguration(Properties configuration) {
     configuration.entrySet().forEach(e -> {
-      try {
-        setProperty((String)e.getKey(), (String)e.getValue());
-      } catch (JMSException ex) {
-        throw new RuntimeException(ex);
-      }
+      getConfiguration().setProperty((String)e.getKey(), (String)e.getValue());
     });
   }
 }

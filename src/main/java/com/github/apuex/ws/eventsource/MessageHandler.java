@@ -1,6 +1,8 @@
 package com.github.apuex.ws.eventsource;
 
 import com.google.gson.Gson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.web.socket.*;
 
@@ -15,6 +17,7 @@ import java.util.Set;
 import static java.lang.System.out;
 
 public class MessageHandler implements WebSocketHandler, MessageListener {
+  private Logger log = LoggerFactory.getLogger(this.getClass().getName());
   private final JmsTemplate jmsTemplate;
   private final Map<String, WebSocketSession> sessionMap = new HashMap<>();
   private final Set<String> invalidSessionIds = new HashSet<>();
@@ -48,7 +51,7 @@ public class MessageHandler implements WebSocketHandler, MessageListener {
 
   @Override
   public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-    out.printf("%s, %s connected.\n", session.getId(), session.getUri());
+    log.info("{}, {} connected.\n", session.getId(), session.getUri());
     sessionMap.put(session.getId(), session);
   }
 
@@ -56,7 +59,6 @@ public class MessageHandler implements WebSocketHandler, MessageListener {
   public void handleMessage(WebSocketSession wsSession, WebSocketMessage<?> message) throws Exception {
     String payload = (String) message.getPayload();
     jmsTemplate.send(jmsSession -> {
-      out.println(payload);
       javax.jms.TextMessage msg = jmsSession.createTextMessage();
       msg.setText(payload);
       return msg;
@@ -65,14 +67,14 @@ public class MessageHandler implements WebSocketHandler, MessageListener {
 
   @Override
   public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
-    out.printf("%s, %s disconnected.\n", session.getId(), session.getUri());
+    log.info("{}, {} disconnected.\n", session.getId(), session.getUri());
     invalidSessionIds.add(session.getId());
     exception.printStackTrace();
   }
 
   @Override
   public void afterConnectionClosed(WebSocketSession session, CloseStatus closeStatus) throws Exception {
-    out.printf("%s, %s disconnected.\n", session.getId(), session.getUri());
+    log.info("{}, {} disconnected.\n", session.getId(), session.getUri());
     invalidSessionIds.add(session.getId());
   }
 

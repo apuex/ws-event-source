@@ -21,6 +21,9 @@
             <prop key="imqBrokerHostPort">7676</prop>
             <prop key="imqDefaultUsername">admin</prop>
             <prop key="imqDefaultPassword">admin</prop>
+            <prop key="imqReconnectEnabled">true</prop>
+            <prop key="imqReconnectInterval">3000</prop>
+            <prop key="imqReconnectAttempts">1000000</prop>
           </props>
         </property>
       </bean>
