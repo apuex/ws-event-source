@@ -18,7 +18,7 @@
     <dependency>
       <groupId>com.github.apuex.springbootsolution</groupId>
       <artifactId>runtime_2.12</artifactId>
-      <version>1.0.3</version>
+      <version>1.0.5</version>
     </dependency>
     <dependency>
       <groupId>com.google.protobuf</groupId>
